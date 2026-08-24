@@ -23,7 +23,7 @@ const createLog = async (req, res) => {
 
         const [result] = await db.query(
             `INSERT INTO logs
-            (timestamp, source_ip, event_type, endpoint, method,
+            (timestamp, source_ip, event_type, endpoint, http_method,
              status_code, severity, response_time, message)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
