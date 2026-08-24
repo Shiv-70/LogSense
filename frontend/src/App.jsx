@@ -8,6 +8,7 @@ import ActivityChart from "./components/ActivityChart";
 import LogForm from "./components/LogForm";
 import SeverityChart from "./components/SeverityChart";
 import TopSourceIPs from "./components/TopSourceIPs";
+import AlertCenter from "./components/AlertCenter";
 
 import { getLogs } from "./services/api";
 
@@ -99,7 +100,11 @@ function App() {
       errors,
       critical,
       warnings,
-      uniqueIPs
+      uniqueIPs,
+      anomalies: logs.filter((log) => log.anomaly_id).length,
+      averageAnomalyScore: logs.filter((log) => log.anomaly_score).length
+        ? Math.round(logs.filter((log) => log.anomaly_score).reduce((sum, log) => sum + Number(log.anomaly_score), 0) / logs.filter((log) => log.anomaly_score).length)
+        : 0
     };
 
   }, [logs]);
@@ -274,6 +279,20 @@ function App() {
                 value={statistics.uniqueIPs}
                 icon="🔐"
                 description="Distinct source addresses"
+              />
+
+              <StatCard
+                title="Anomalies"
+                value={statistics.anomalies}
+                icon="🚨"
+                description="Algorithm-detected events"
+              />
+
+              <StatCard
+                title="Avg. Anomaly Score"
+                value={statistics.averageAnomalyScore}
+                icon="🎯"
+                description="Average score (0–100)"
               />
 
             </section>
@@ -589,265 +608,7 @@ function App() {
           </section>
         )}
 
-        {activePage === "alerts" && (
-
-          <section className="alerts-page">
-
-            {/* Header */}
-
-            <div className="alerts-page-header">
-
-              <div>
-                <h2>Security Alerts</h2>
-
-                <p>
-                  Security events requiring attention.
-                </p>
-              </div>
-
-              <div className="alert-total">
-
-                <strong>
-                  {alertStatistics.total}
-                </strong>
-
-                <span>
-                  Active Alerts
-                </span>
-
-              </div>
-
-            </div>
-
-
-            {/* Alert Statistics */}
-
-            <div className="alert-stats-grid">
-
-              <div className="alert-stat-card critical-alert">
-
-                <div className="alert-stat-icon">
-                  🚨
-                </div>
-
-                <div>
-                  <strong>
-                    {alertStatistics.critical}
-                  </strong>
-
-                  <span>
-                    Critical
-                  </span>
-                </div>
-
-              </div>
-
-
-              <div className="alert-stat-card error-alert">
-
-                <div className="alert-stat-icon">
-                  🔴
-                </div>
-
-                <div>
-                  <strong>
-                    {alertStatistics.errors}
-                  </strong>
-
-                  <span>
-                    Errors
-                  </span>
-                </div>
-
-              </div>
-
-
-              <div className="alert-stat-card warning-alert">
-
-                <div className="alert-stat-icon">
-                  ⚠️
-                </div>
-
-                <div>
-                  <strong>
-                    {alertStatistics.warnings}
-                  </strong>
-
-                  <span>
-                    Warnings
-                  </span>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            {/* Filter */}
-
-            <div className="alerts-filter-card">
-
-              <div>
-
-                <strong>
-                  Filter Alerts
-                </strong>
-
-                <p>
-                  Show alerts by severity
-                </p>
-
-              </div>
-
-              <select
-                value={alertFilter}
-                onChange={(e) =>
-                  setAlertFilter(e.target.value)
-                }
-              >
-
-                <option value="ALL">
-                  All Alerts
-                </option>
-
-                <option value="CRITICAL">
-                  Critical
-                </option>
-
-                <option value="ERROR">
-                  Error
-                </option>
-
-                <option value="WARNING">
-                  Warning
-                </option>
-
-              </select>
-
-            </div>
-
-
-            {/* Alerts */}
-
-            <div className="alerts-list">
-
-              {filteredAlerts.length === 0 ? (
-
-                <div className="no-alerts">
-
-                  <div className="no-alerts-icon">
-                    ✅
-                  </div>
-
-                  <strong>
-                    No Security Alerts
-                  </strong>
-
-                  <p>
-                    No alerts match the selected severity.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                filteredAlerts.map((log) => {
-
-                  const severity =
-                    String(
-                      log.severity || "INFO"
-                    ).toUpperCase();
-
-                  const severityClass =
-                    severity === "CRITICAL"
-                      ? "critical"
-                      : severity === "ERROR"
-                        ? "error"
-                        : "warning";
-
-                  return (
-
-                    <div
-                      className={`alert-item ${severityClass}`}
-                      key={log.id}
-                    >
-
-                      <div className="alert-icon">
-
-                        {severity === "CRITICAL"
-                          ? "🚨"
-                          : severity === "ERROR"
-                            ? "🔴"
-                            : "⚠️"
-                        }
-
-                      </div>
-
-
-                      <div className="alert-content">
-
-                        <div className="alert-title-row">
-
-                          <strong>
-                            {log.event_type || "Security Event"}
-                          </strong>
-
-                          <span
-                            className={`alert-severity ${severityClass}`}
-                          >
-                            {log.severity || "WARNING"}
-                          </span>
-
-                        </div>
-
-
-                        <p className="alert-message">
-
-                          {log.message ||
-                            `${log.method || ""} ${log.endpoint || ""}`
-                          }
-
-                        </p>
-
-
-                        <div className="alert-meta">
-
-                          <span>
-                            🌐 {log.source_ip || "-"}
-                          </span>
-
-                          <span>
-                            🔗 {log.endpoint || "-"}
-                          </span>
-
-                          <span>
-                            📅{" "}
-                            {log.timestamp
-                              ? new Date(
-                                log.timestamp
-                              ).toLocaleString()
-                              : "-"
-                            }
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                  );
-
-                })
-
-              )}
-
-            </div>
-
-          </section>
-
-        )}
+        {activePage === "alerts" && <AlertCenter />}
 
       </main>
 

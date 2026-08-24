@@ -159,7 +159,7 @@ const LogTable = ({ logs }) => {
                                         </td>
 
                                         <td>
-                                            {log.method || "-"}
+                                            {log.http_method || "-"}
                                         </td>
 
                                         <td>
@@ -335,7 +335,7 @@ const LogTable = ({ logs }) => {
                                 </span>
 
                                 <strong>
-                                    {selectedLog.method || "-"}
+                                    {selectedLog.http_method || "-"}
                                 </strong>
 
                             </div>

@@ -49,6 +49,23 @@ const LogForm = ({ onLogCreated }) => {
             return;
         }
 
+        if (Number.isNaN(new Date(formData.timestamp).getTime())) {
+            setError("Please provide a valid timestamp.");
+            return;
+        }
+
+        const ipPattern = /^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)(?:\\.|$)){4}$/;
+        if (!ipPattern.test(formData.source_ip) && !formData.source_ip.includes(":")) {
+            setError("Please enter a valid IPv4 or IPv6 source IP.");
+            return;
+        }
+
+        const status = Number(formData.status_code);
+        if (!Number.isInteger(status) || status < 100 || status > 599) {
+            setError("Status code must be an integer between 100 and 599.");
+            return;
+        }
+
         try {
 
             setLoading(true);

@@ -1733,3 +1733,161 @@ tr:hover {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ============================= */
+/* ANOMALY DETECTION + AI */
+/* ============================= */
+
+.anomaly-reason {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #7c2d12;
+    line-height: 1.5;
+}
+
+.anomaly-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ai-analyze-btn {
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.ai-analyze-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.alert-item.high {
+    border-left: 4px solid #f97316;
+}
+
+.alert-item.medium {
+    border-left: 4px solid #eab308;
+}
+
+.alert-severity.high {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.alert-severity.medium {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.anomaly-modal {
+    max-width: 820px;
+}
+
+.anomaly-score-banner {
+    margin: 20px 22px 10px;
+    padding: 18px;
+    border-radius: 12px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.anomaly-score-banner div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.anomaly-score-banner span {
+    color: #9ca3af;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.anomaly-score-banner strong {
+    color: #dc2626;
+    font-size: 22px;
+}
+
+.ai-section {
+    margin: 20px 22px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.ai-section h3 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.ai-section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 14px;
+}
+
+.detection-section {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.ai-section > p,
+.ai-block p,
+.ai-empty p {
+    color: #4b5563;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.ai-section small {
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+.ai-block {
+    padding: 13px;
+    margin-top: 10px;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.ai-block strong {
+    display: block;
+    color: #374151;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.ai-block p {
+    margin: 0;
+}
+
+.ai-model {
+    display: block;
+    margin-top: 12px;
+}
+
+.ai-empty {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+@media (max-width: 650px) {
+    .anomaly-actions,
+    .ai-section-title,
+    .anomaly-score-banner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

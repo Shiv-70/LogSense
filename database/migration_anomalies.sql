@@ -1,18 +1,4 @@
-CREATE DATABASE IF NOT EXISTS logsense_db;
 USE logsense_db;
-
-CREATE TABLE IF NOT EXISTS logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    timestamp DATETIME NOT NULL,
-    source_ip VARCHAR(45) NOT NULL,
-    event_type VARCHAR(50) NOT NULL,
-    endpoint VARCHAR(255),
-    http_method VARCHAR(10),
-    status_code INT,
-    severity ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL') DEFAULT 'INFO',
-    message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 CREATE TABLE IF NOT EXISTS anomalies (
     id INT AUTO_INCREMENT PRIMARY KEY,
