@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createLog } from "../services/api";
 
 const LogForm = ({ onLogCreated }) => {
-
     const [formData, setFormData] = useState({
         timestamp: "",
         source_ip: "",
@@ -19,23 +18,21 @@ const LogForm = ({ onLogCreated }) => {
     const [error, setError] = useState("");
 
     const handleChange = (e) => {
-
         const { name, value } = e.target;
 
         setFormData((prev) => ({
             ...prev,
             [name]: value
         }));
-
     };
 
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
         setSuccess("");
         setError("");
 
+        // Required fields
         if (
             !formData.timestamp ||
             !formData.source_ip ||
@@ -49,41 +46,54 @@ const LogForm = ({ onLogCreated }) => {
             return;
         }
 
+        // Timestamp validation
         if (Number.isNaN(new Date(formData.timestamp).getTime())) {
             setError("Please provide a valid timestamp.");
             return;
         }
 
-        const ipPattern =
-            /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.|$)){4}$/;
+        // IPv4 / IPv6 validation
+        const sourceIP = formData.source_ip.trim();
 
-        if (
-            !ipPattern.test(formData.source_ip.trim()) &&
-            !formData.source_ip.includes(":")
-        ) {
+        const ipv4Pattern =
+            /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+
+        const ipv6Pattern =
+            /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+
+        if (!ipv4Pattern.test(sourceIP) && !ipv6Pattern.test(sourceIP)) {
             setError("Please enter a valid IPv4 or IPv6 source IP.");
             return;
         }
 
+        // Status code validation
         const status = Number(formData.status_code);
-        if (!Number.isInteger(status) || status < 100 || status > 599) {
-            setError("Status code must be an integer between 100 and 599.");
+
+        if (
+            !Number.isInteger(status) ||
+            status < 100 ||
+            status > 599
+        ) {
+            setError(
+                "Status code must be an integer between 100 and 599."
+            );
             return;
         }
 
         try {
-
             setLoading(true);
 
             const result = await createLog({
                 ...formData,
-                status_code: Number(formData.status_code)
+                source_ip: sourceIP,
+                status_code: status
             });
 
             setSuccess(
                 result.message || "Log created successfully."
             );
 
+            // Reset form
             setFormData({
                 timestamp: "",
                 source_ip: "",
@@ -100,7 +110,6 @@ const LogForm = ({ onLogCreated }) => {
             }
 
         } catch (err) {
-
             console.error(err);
 
             setError(
@@ -109,18 +118,14 @@ const LogForm = ({ onLogCreated }) => {
             );
 
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     return (
         <section className="log-form-card">
 
             <div className="form-header">
-
                 <div>
                     <h2>Create Log</h2>
 
@@ -128,7 +133,6 @@ const LogForm = ({ onLogCreated }) => {
                         Add a new application event to LogSense.
                     </p>
                 </div>
-
             </div>
 
             {success && (
@@ -146,8 +150,9 @@ const LogForm = ({ onLogCreated }) => {
             <form onSubmit={handleSubmit}>
 
                 <div className="form-grid">
-                    <div className="form-group">
 
+                    {/* Timestamp */}
+                    <div className="form-group">
                         <label>
                             Timestamp <span>*</span>
                         </label>
@@ -158,13 +163,10 @@ const LogForm = ({ onLogCreated }) => {
                             value={formData.timestamp}
                             onChange={handleChange}
                         />
-
                     </div>
 
                     {/* Source IP */}
-
                     <div className="form-group">
-
                         <label>
                             Source IP <span>*</span>
                         </label>
@@ -172,17 +174,14 @@ const LogForm = ({ onLogCreated }) => {
                         <input
                             type="text"
                             name="source_ip"
-                            placeholder="192.168.1.14"
+                            placeholder="192.168.1.50"
                             value={formData.source_ip}
                             onChange={handleChange}
                         />
-
                     </div>
 
                     {/* Event Type */}
-
                     <div className="form-group">
-
                         <label>
                             Event Type <span>*</span>
                         </label>
@@ -192,7 +191,6 @@ const LogForm = ({ onLogCreated }) => {
                             value={formData.event_type}
                             onChange={handleChange}
                         >
-
                             <option value="API_REQUEST">
                                 API_REQUEST
                             </option>
@@ -220,15 +218,11 @@ const LogForm = ({ onLogCreated }) => {
                             <option value="SYSTEM">
                                 SYSTEM
                             </option>
-
                         </select>
-
                     </div>
 
                     {/* Endpoint */}
-
                     <div className="form-group">
-
                         <label>
                             Endpoint <span>*</span>
                         </label>
@@ -236,17 +230,14 @@ const LogForm = ({ onLogCreated }) => {
                         <input
                             type="text"
                             name="endpoint"
-                            placeholder="/api/users"
+                            placeholder="/api/users/login"
                             value={formData.endpoint}
                             onChange={handleChange}
                         />
-
                     </div>
 
-                    {/* Method */}
-
+                    {/* HTTP Method */}
                     <div className="form-group">
-
                         <label>
                             HTTP Method <span>*</span>
                         </label>
@@ -256,21 +247,16 @@ const LogForm = ({ onLogCreated }) => {
                             value={formData.method}
                             onChange={handleChange}
                         >
-
                             <option value="GET">GET</option>
                             <option value="POST">POST</option>
                             <option value="PUT">PUT</option>
                             <option value="PATCH">PATCH</option>
                             <option value="DELETE">DELETE</option>
-
                         </select>
-
                     </div>
 
                     {/* Status Code */}
-
                     <div className="form-group">
-
                         <label>
                             Status Code <span>*</span>
                         </label>
@@ -284,13 +270,10 @@ const LogForm = ({ onLogCreated }) => {
                             value={formData.status_code}
                             onChange={handleChange}
                         />
-
                     </div>
 
                     {/* Severity */}
-
                     <div className="form-group">
-
                         <label>
                             Severity <span>*</span>
                         </label>
@@ -300,7 +283,6 @@ const LogForm = ({ onLogCreated }) => {
                             value={formData.severity}
                             onChange={handleChange}
                         >
-
                             <option value="INFO">
                                 INFO
                             </option>
@@ -316,15 +298,11 @@ const LogForm = ({ onLogCreated }) => {
                             <option value="CRITICAL">
                                 CRITICAL
                             </option>
-
                         </select>
-
                     </div>
 
                     {/* Message */}
-
                     <div className="form-group full-form-width">
-
                         <label>
                             Message
                         </label>
@@ -336,13 +314,11 @@ const LogForm = ({ onLogCreated }) => {
                             onChange={handleChange}
                             rows="4"
                         />
-
                     </div>
 
                 </div>
 
                 <div className="form-actions">
-
                     <button
                         type="submit"
                         className="create-log-btn"
@@ -353,7 +329,6 @@ const LogForm = ({ onLogCreated }) => {
                             : "➕ Create Log"
                         }
                     </button>
-
                 </div>
 
             </form>
