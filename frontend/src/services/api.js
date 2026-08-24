@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-    baseURL: "https://logsense-backend-o3dn.onrender.com",
+    baseURL: "https://logsense-backend-o3dn.onrender.com/api",
     headers: {
         "Content-Type": "application/json"
     }
