@@ -54,8 +54,13 @@ const LogForm = ({ onLogCreated }) => {
             return;
         }
 
-        const ipPattern = /^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)(?:\\.|$)){4}$/;
-        if (!ipPattern.test(formData.source_ip) && !formData.source_ip.includes(":")) {
+        const ipPattern =
+            /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.|$)){4}$/;
+
+        if (
+            !ipPattern.test(formData.source_ip.trim()) &&
+            !formData.source_ip.includes(":")
+        ) {
             setError("Please enter a valid IPv4 or IPv6 source IP.");
             return;
         }
