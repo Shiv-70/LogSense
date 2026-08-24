@@ -10,7 +10,6 @@ const createLog = async (req, res) => {
             method,
             status_code,
             severity,
-            response_time,
             message
         } = req.body;
 
@@ -24,8 +23,8 @@ const createLog = async (req, res) => {
         const [result] = await db.query(
             `INSERT INTO logs
             (timestamp, source_ip, event_type, endpoint, http_method,
-             status_code, severity, response_time, message)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             status_code, severity, message)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 timestamp,
                 source_ip,
@@ -34,7 +33,6 @@ const createLog = async (req, res) => {
                 method || null,
                 status_code || null,
                 severity || "INFO",
-                response_time || null,
                 message || null
             ]
         );
