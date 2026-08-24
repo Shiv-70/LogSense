@@ -54,13 +54,15 @@ const LogForm = ({ onLogCreated }) => {
             return;
         }
 
-        const ipPattern =
-            /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.|$)){4}$/;
+        const sourceIP = formData.source_ip.trim();
 
-        if (
-            !ipPattern.test(formData.source_ip.trim()) &&
-            !formData.source_ip.includes(":")
-        ) {
+        const ipv4Pattern =
+            /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+
+        const ipv6Pattern =
+            /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+
+        if (!ipv4Pattern.test(sourceIP) && !ipv6Pattern.test(sourceIP)) {
             setError("Please enter a valid IPv4 or IPv6 source IP.");
             return;
         }
@@ -77,6 +79,7 @@ const LogForm = ({ onLogCreated }) => {
 
             const result = await createLog({
                 ...formData,
+                source_ip: sourceIP,
                 status_code: Number(formData.status_code)
             });
 
