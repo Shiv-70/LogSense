@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { deleteLog } from "../services/api";
 
-const LogTable = ({ logs }) => {
+const LogTable = ({ logs, onLogDeleted }) => {
     const [selectedLog, setSelectedLog] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
@@ -45,7 +45,11 @@ const LogTable = ({ logs }) => {
 
             setDeleteTarget(null);
 
-            window.location.reload();
+            // Update logs without refreshing the page
+            if (onLogDeleted) {
+                onLogDeleted(deleteTarget.id);
+            }
+
         } catch (error) {
             console.error("Delete log error:", error);
             alert("Failed to delete log.");

@@ -26,7 +26,13 @@ function App() {
 
   const [alertFilter, setAlertFilter] = useState("ALL");
 
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState(
+    localStorage.getItem("activePage") || "dashboard"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("activePage", activePage);
+  }, [activePage]);
 
 
   const fetchLogs = async () => {
@@ -583,7 +589,14 @@ function App() {
 
             {/* Logs */}
 
-            <LogTable logs={filteredLogs} />
+            <LogTable
+              logs={filteredLogs}
+              onLogDeleted={(deletedId) => {
+                setLogs((prevLogs) =>
+                  prevLogs.filter((log) => log.id !== deletedId)
+                );
+              }}
+            />
 
           </>
         )}
@@ -603,7 +616,14 @@ function App() {
               Complete collection of logs received from the LogSense API.
             </p>
 
-            <LogTable logs={filteredLogs} />
+            <LogTable
+              logs={filteredLogs}
+              onLogDeleted={(deletedId) => {
+                setLogs((prevLogs) =>
+                  prevLogs.filter((log) => log.id !== deletedId)
+                );
+              }}
+            />
 
           </section>
         )}
