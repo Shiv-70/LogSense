@@ -1,6 +1,7 @@
 const db = require("../config/database");
 const net = require("net");
 const { detectAnomaly } = require("../services/anomalyDetector");
+const { GoogleGenAI } = require("@google/genai");
 
 const createAnomalyForLog = async (log) => {
     const detection = detectAnomaly(log);
@@ -262,86 +263,121 @@ const getAnomaly = async (req, res) => {
 
 const analyzeAnomalyWithAI = async (req, res) => {
     try {
-        if (!process.env.OPENAI_API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
             return res.status(503).json({
                 success: false,
-                message: "AI is not configured. Add OPENAI_API_KEY to the backend environment."
+                message: "AI is not configured. Add GEMINI_API_KEY to the backend environment."
             });
         }
 
         const [rows] = await db.query(`
-            SELECT a.*, l.timestamp, l.source_ip, l.event_type, l.endpoint,
-                   l.http_method, l.status_code, l.severity AS log_severity, l.message
+            SELECT a.*, 
+                   l.timestamp,
+                   l.source_ip,
+                   l.event_type,
+                   l.endpoint,
+                   l.http_method,
+                   l.status_code,
+                   l.severity AS log_severity,
+                   l.message
             FROM anomalies a
             JOIN logs l ON l.id = a.log_id
             WHERE a.id = ?
         `, [req.params.id]);
 
-        if (!rows.length) return res.status(404).json({ success: false, message: "Anomaly not found" });
-
-        const anomaly = rows[0];
-        const prompt = `You are a cybersecurity incident analyst. The application's own deterministic detection algorithm has already flagged this log as an anomaly. Do NOT decide whether it is anomalous. Explain the existing finding.
-
-Return ONLY valid JSON with exactly these keys:
-explanation, root_cause, recommended_action
-
-Log:
-timestamp: ${anomaly.timestamp}
-source_ip: ${anomaly.source_ip}
-event_type: ${anomaly.event_type}
-endpoint: ${anomaly.endpoint || ""}
-http_method: ${anomaly.http_method || ""}
-status_code: ${anomaly.status_code ?? ""}
-severity: ${anomaly.log_severity}
-message: ${anomaly.message || ""}
-algorithm_anomaly_score: ${anomaly.anomaly_score}
-algorithm_detection_reason: ${anomaly.reason}`;
-
-        const response = await fetch("https://api.openai.com/v1/responses", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-                input: prompt
-            })
-        });
-
-        if (!response.ok) {
-            const detail = await response.text();
-            console.error("OpenAI error:", detail);
-            return res.status(502).json({
+        if (!rows.length) {
+            return res.status(404).json({
                 success: false,
-                message: "AI service request failed"
+                message: "Anomaly not found"
             });
         }
 
-        const aiResponse = await response.json();
-        const text = aiResponse.output_text ||
-            aiResponse.output?.flatMap((item) => item.content || [])
-                .map((item) => item.text || "")
-                .join("") || "";
+        const anomaly = rows[0];
+
+        const prompt = `
+You are a cybersecurity incident analyst.
+
+The application's deterministic security detection algorithm has already flagged this log as an anomaly.
+
+Do NOT decide whether the log is anomalous.
+Instead, analyze the existing finding and explain it.
+
+Return ONLY valid JSON with exactly these three keys:
+explanation
+root_cause
+recommended_action
+
+Log information:
+
+Timestamp: ${anomaly.timestamp}
+Source IP: ${anomaly.source_ip}
+Event Type: ${anomaly.event_type}
+Endpoint: ${anomaly.endpoint || ""}
+HTTP Method: ${anomaly.http_method || ""}
+Status Code: ${anomaly.status_code ?? ""}
+Severity: ${anomaly.log_severity}
+Message: ${anomaly.message || ""}
+
+Algorithm Anomaly Score: ${anomaly.anomaly_score}
+Algorithm Detection Reason: ${anomaly.reason}
+
+Requirements:
+
+1. explanation:
+Explain clearly why this log is suspicious.
+
+2. root_cause:
+Identify the likely security issue or attack technique.
+
+3. recommended_action:
+Give practical steps that a security administrator should take.
+
+Keep the response concise and suitable for a security monitoring dashboard.
+`;
+
+        const ai = new GoogleGenAI({
+            apiKey: process.env.GEMINI_API_KEY
+        });
+
+        const model =
+            process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt
+        });
+
+        const text = response.text || "";
 
         let parsed;
+
         try {
-            parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-        } catch {
+            parsed = JSON.parse(
+                text
+                    .replace(/```json/gi, "")
+                    .replace(/```/g, "")
+                    .trim()
+            );
+        } catch (error) {
+            console.error("Gemini returned invalid JSON:", text);
+
             return res.status(502).json({
                 success: false,
                 message: "AI returned an invalid analysis format"
             });
         }
 
-        if (!parsed.explanation || !parsed.root_cause || !parsed.recommended_action) {
+        if (
+            !parsed.explanation ||
+            !parsed.root_cause ||
+            !parsed.recommended_action
+        ) {
             return res.status(502).json({
                 success: false,
                 message: "AI response was incomplete"
             });
         }
 
-        const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
         const [existing] = await db.query(
             "SELECT id FROM ai_analysis WHERE anomaly_id = ? LIMIT 1",
             [anomaly.id]
@@ -350,16 +386,31 @@ algorithm_detection_reason: ${anomaly.reason}`;
         if (existing.length) {
             await db.query(
                 `UPDATE ai_analysis
-                 SET explanation = ?, root_cause = ?, recommended_action = ?, model = ?
+                 SET explanation = ?,
+                     root_cause = ?,
+                     recommended_action = ?,
+                     model = ?
                  WHERE anomaly_id = ?`,
-                [parsed.explanation, parsed.root_cause, parsed.recommended_action, model, anomaly.id]
+                [
+                    parsed.explanation,
+                    parsed.root_cause,
+                    parsed.recommended_action,
+                    model,
+                    anomaly.id
+                ]
             );
         } else {
             await db.query(
                 `INSERT INTO ai_analysis
                  (anomaly_id, explanation, root_cause, recommended_action, model)
                  VALUES (?, ?, ?, ?, ?)`,
-                [anomaly.id, parsed.explanation, parsed.root_cause, parsed.recommended_action, model]
+                [
+                    anomaly.id,
+                    parsed.explanation,
+                    parsed.root_cause,
+                    parsed.recommended_action,
+                    model
+                ]
             );
         }
 
@@ -373,9 +424,14 @@ algorithm_detection_reason: ${anomaly.reason}`;
                 model
             }
         });
+
     } catch (error) {
-        console.error("AI analysis error:", error.message);
-        return res.status(500).json({ success: false, message: "Failed to generate AI analysis" });
+        console.error("Gemini AI analysis error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to generate AI analysis"
+        });
     }
 };
 
