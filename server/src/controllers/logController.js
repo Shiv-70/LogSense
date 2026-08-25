@@ -131,7 +131,7 @@ const getLogs = async (req, res) => {
         if (source_ip) { query += " AND l.source_ip = ?"; values.push(source_ip); }
         if (severity) { query += " AND l.severity = ?"; values.push(severity); }
 
-        query += " ORDER BY l.timestamp DESC";
+        query += " ORDER BY l.id DESC";
         const [rows] = await db.query(query, values);
 
         return res.status(200).json({

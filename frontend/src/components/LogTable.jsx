@@ -2,15 +2,12 @@ import { useState } from "react";
 import { deleteLog } from "../services/api";
 
 const LogTable = ({ logs }) => {
-
     const [selectedLog, setSelectedLog] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
     const getSeverityClass = (severity) => {
-
         switch (String(severity || "").toUpperCase()) {
-
             case "CRITICAL":
                 return "severity critical";
 
@@ -27,7 +24,6 @@ const LogTable = ({ logs }) => {
     };
 
     const getStatusClass = (statusCode) => {
-
         if (!statusCode) {
             return "status success-status";
         }
@@ -38,13 +34,11 @@ const LogTable = ({ logs }) => {
     };
 
     const handleDelete = async () => {
-
         if (!deleteTarget) {
             return;
         }
 
         try {
-
             setDeleting(true);
 
             await deleteLog(deleteTarget.id);
@@ -52,19 +46,19 @@ const LogTable = ({ logs }) => {
             setDeleteTarget(null);
 
             window.location.reload();
-
         } catch (error) {
-
             console.error("Delete log error:", error);
-
             alert("Failed to delete log.");
-
         } finally {
-
             setDeleting(false);
-
         }
     };
+
+    // Sort logs by actual database ID.
+    // Highest/newest ID appears first.
+    const sortedLogs = [...logs].sort(
+        (a, b) => Number(b.id) - Number(a.id)
+    );
 
     return (
         <>
@@ -93,7 +87,8 @@ const LogTable = ({ logs }) => {
                         <thead>
 
                             <tr>
-                                <th>ID</th>
+                                <th>Sr. No.</th>
+                                <th>Database ID</th>
                                 <th>Timestamp</th>
                                 <th>Source IP</th>
                                 <th>Event</th>
@@ -108,12 +103,12 @@ const LogTable = ({ logs }) => {
 
                         <tbody>
 
-                            {logs.length === 0 ? (
+                            {sortedLogs.length === 0 ? (
 
                                 <tr>
 
                                     <td
-                                        colSpan="9"
+                                        colSpan="10"
                                         className="empty-table"
                                     >
                                         No logs found
@@ -123,16 +118,23 @@ const LogTable = ({ logs }) => {
 
                             ) : (
 
-                                logs.map((log) => (
+                                sortedLogs.map((log, index) => (
 
                                     <tr key={log.id}>
 
+                                        {/* Sr. No. */}
                                         <td>
                                             <strong>
-                                                #{log.id}
+                                                {index + 1}
                                             </strong>
                                         </td>
 
+                                        {/* Actual Database ID */}
+                                        <td>
+                                            {log.id}
+                                        </td>
+
+                                        {/* Timestamp */}
                                         <td>
                                             {log.timestamp
                                                 ? new Date(
@@ -142,28 +144,30 @@ const LogTable = ({ logs }) => {
                                             }
                                         </td>
 
+                                        {/* Source IP */}
                                         <td className="ip">
                                             {log.source_ip || "-"}
                                         </td>
 
+                                        {/* Event */}
                                         <td>
-
                                             <span className="event-type">
                                                 {log.event_type || "-"}
                                             </span>
-
                                         </td>
 
+                                        {/* Endpoint */}
                                         <td>
                                             {log.endpoint || "-"}
                                         </td>
 
+                                        {/* HTTP Method */}
                                         <td>
                                             {log.http_method || "-"}
                                         </td>
 
+                                        {/* Status */}
                                         <td>
-
                                             <span
                                                 className={getStatusClass(
                                                     log.status_code
@@ -171,11 +175,10 @@ const LogTable = ({ logs }) => {
                                             >
                                                 {log.status_code || "-"}
                                             </span>
-
                                         </td>
 
+                                        {/* Severity */}
                                         <td>
-
                                             <span
                                                 className={getSeverityClass(
                                                     log.severity
@@ -183,9 +186,9 @@ const LogTable = ({ logs }) => {
                                             >
                                                 {log.severity || "INFO"}
                                             </span>
-
                                         </td>
 
+                                        {/* Actions */}
                                         <td>
 
                                             <div className="log-actions">
@@ -238,9 +241,7 @@ const LogTable = ({ logs }) => {
 
                     <div
                         className="log-modal"
-                        onClick={(e) =>
-                            e.stopPropagation()
-                        }
+                        onClick={(e) => e.stopPropagation()}
                     >
 
                         <div className="modal-header">
@@ -424,67 +425,68 @@ const LogTable = ({ logs }) => {
 
             )}
 
+
+            {/* DELETE CONFIRMATION MODAL */}
+
             {deleteTarget && (
 
-    <div
-        className="modal-overlay"
-        onClick={() => setDeleteTarget(null)}
-    >
-
-        <div
-            className="delete-modal"
-            onClick={(e) =>
-                e.stopPropagation()
-            }
-        >
-
-            <div className="delete-icon">
-                🗑️
-            </div>
-
-            <h2>
-                Delete Log?
-            </h2>
-
-            <p>
-                Are you sure you want to delete
-                log <strong>#{deleteTarget.id}</strong>?
-            </p>
-
-            <span className="delete-warning">
-                This action cannot be undone.
-            </span>
-
-            <div className="delete-actions">
-
-                <button
-                    className="cancel-delete-btn"
-                    onClick={() =>
-                        setDeleteTarget(null)
-                    }
-                    disabled={deleting}
+                <div
+                    className="modal-overlay"
+                    onClick={() => setDeleteTarget(null)}
                 >
-                    Cancel
-                </button>
 
-                <button
-                    className="confirm-delete-btn"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                >
-                    {deleting
-                        ? "Deleting..."
-                        : "Delete Log"
-                    }
-                </button>
+                    <div
+                        className="delete-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
 
-            </div>
+                        <div className="delete-icon">
+                            🗑️
+                        </div>
 
-        </div>
+                        <h2>
+                            Delete Log?
+                        </h2>
 
-    </div>
+                        <p>
+                            Are you sure you want to delete
+                            log <strong>#{deleteTarget.id}</strong>?
+                        </p>
 
-)}
+                        <span className="delete-warning">
+                            This action cannot be undone.
+                        </span>
+
+                        <div className="delete-actions">
+
+                            <button
+                                className="cancel-delete-btn"
+                                onClick={() =>
+                                    setDeleteTarget(null)
+                                }
+                                disabled={deleting}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                className="confirm-delete-btn"
+                                onClick={handleDelete}
+                                disabled={deleting}
+                            >
+                                {deleting
+                                    ? "Deleting..."
+                                    : "Delete Log"
+                                }
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
 
         </>
     );

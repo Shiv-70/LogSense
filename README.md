@@ -76,11 +76,11 @@ The backend keeps the AI API key server-side.
 Set these environment variables on Render:
 
 ```text
-OPENAI_API_KEY=your_key
-OPENAI_MODEL=gpt-4.1-mini
+GEMINI_API_KEY=your_key
+GEMINI_MODEL=gpt-4.1-mini
 ```
 
-Do not put `OPENAI_API_KEY` in the React frontend or commit it to GitHub.
+Do not put `GEMINI_API_KEY` in the React frontend or commit it to GitHub.
 
 The backend calls the AI only for an anomaly that has already been created by the detector.
 
@@ -191,7 +191,7 @@ Start command:
 npm start
 ```
 
-Add the database variables and `OPENAI_API_KEY`.
+Add the database variables and `GEMINI_API_KEY`.
 
 ### Frontend on Render
 
