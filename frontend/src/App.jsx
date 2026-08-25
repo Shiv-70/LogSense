@@ -51,7 +51,7 @@ function App() {
       console.error(err);
 
       setError(
-        "Unable to connect to LogSense API. Make sure the backend is running on port 5000."
+        "Unable to connect to LogSense API. Make sure the backend is running."
       );
 
     } finally {
